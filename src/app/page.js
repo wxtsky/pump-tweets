@@ -168,6 +168,7 @@ export default function Home() {
   const [followerThreshold, setFollowerThreshold] = useState(1000);
   const [autoUpdate, setAutoUpdate] = useState(true);
   const [countdown, setCountdown] = useState(10);
+  const [showHighlightedOnly, setShowHighlightedOnly] = useState(false);
 
   const {
     data,
@@ -250,6 +251,16 @@ export default function Home() {
               (粉丝数 ≥ {followerThreshold} 的推文将被高亮显示)
             </span>
           </div>
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={showHighlightedOnly}
+              onCheckedChange={setShowHighlightedOnly}
+              className="data-[state=checked]:bg-amber-500"
+            />
+            <span className="text-sm text-gray-600">
+              仅显示高亮推文
+            </span>
+          </div>
           <div className="flex items-center gap-2 ml-auto">
             <Switch
               checked={autoUpdate}
@@ -283,13 +294,15 @@ export default function Home() {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {data.data.map((tweet, index) => (
-            <TweetCard 
-              key={tweet.tweet_id} 
-              tweet={tweet} 
-              index={index}
-              followerThreshold={followerThreshold}
-            />
+          {data.data
+            .filter(tweet => !showHighlightedOnly || tweet.followers_count >= followerThreshold)
+            .map((tweet, index) => (
+              <TweetCard 
+                key={tweet.tweet_id} 
+                tweet={tweet} 
+                index={index}
+                followerThreshold={followerThreshold}
+              />
           ))}
         </div>
       </div>
