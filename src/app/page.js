@@ -29,6 +29,19 @@ const fetchTweets = async () => {
 const TweetCard = ({ tweet, index, followerThreshold }) => {
   const isHighlighted = tweet.followers_count >= followerThreshold;
   const twitterProfileUrl = `https://twitter.com/${tweet.screen_name}`;
+  const [copied, setCopied] = useState(false);
+  const gmgnUrl = `https://gmgn.ai/sol/token/${tweet.contract_address}`;
+  const gmgnLogo = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAFLSURBVHgB5ZYxbsIwFIbtqmr3Dj1Bhxa1S5d261RxgoC4BSsTgoWVgZkVASdATGywsBABAydgYGOAxYDhB/xIZAcibMS3vDj+Hfn9fnkJY/cONxVWfU8cj2vNkYztgs8v0T8wyzzqBP/5T5nJz9urOuHtr+Q8Mouqd98BkHiuKOMeS0XSFwfpQN3tOMD5tniFEIHzOHtTPbDvAN152HsdRsb7UMatAZb7zATrDnA4UM79yRvZUkcRvLwnZEx+CRYn6IzuvAW9yVRGOEHB/KUcamSLe30grkxNcccBejb1TCNwwfo7z86BPh/Y7wO4oB0RoA9QdH0hLOPZeCijM/8D2r6vc4Y6QTNHxuD2/gnpjqkj392luuD3SQbqRNhX1v0aAMgcZ5+bLwJ1/Z0DAE7Q6gfWHYh9A5uaOKmLa24gKsZ9QHf2FNNasO7ACmsBgQNQAes8AAAAAElFTkSuQmCC";
+
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('复制失败:', err);
+    }
+  };
 
   return (
     <motion.div
@@ -37,7 +50,9 @@ const TweetCard = ({ tweet, index, followerThreshold }) => {
       transition={{ duration: 0.3, delay: index * 0.1 }}
     >
       <Card className={`h-full hover:shadow-lg transition-all bg-white/50 backdrop-blur-sm ${
-        isHighlighted ? 'border-2 border-blue-400 shadow-lg' : 'border-none'
+        isHighlighted 
+          ? 'border-2 border-amber-400 shadow-lg bg-gradient-to-r from-amber-50/50 to-white/50 ring-2 ring-amber-200' 
+          : 'border-none'
       }`}>
         <CardHeader className="p-3 pb-0">
           <div className="flex items-center gap-2">
@@ -66,7 +81,30 @@ const TweetCard = ({ tweet, index, followerThreshold }) => {
           
           {tweet.contract_address && (
             <div className="text-xs bg-gray-50 p-2 rounded-md font-mono break-all">
-              {tweet.contract_address}
+              <div className="flex items-center justify-between gap-2">
+                <span>{tweet.contract_address}</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => copyToClipboard(tweet.contract_address)}
+                    className="px-2 py-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-md transition-colors"
+                  >
+                    {copied ? '已复制!' : '复制'}
+                  </button>
+                  <a
+                    href={gmgnUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center w-6 h-6 hover:opacity-80 transition-opacity"
+                    title="在 GMGN 中查看"
+                  >
+                    <img 
+                      src={gmgnLogo} 
+                      alt="GMGN" 
+                      className="w-5 h-5"
+                    />
+                  </a>
+                </div>
+              </div>
             </div>
           )}
           
