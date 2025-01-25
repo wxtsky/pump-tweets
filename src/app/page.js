@@ -21,6 +21,12 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 dayjs.extend(relativeTime);
 dayjs.locale("zh-cn");
@@ -33,6 +39,7 @@ const fetchTweets = async () => {
 
 const TweetCard = ({ tweet, index, followerThreshold }) => {
   const [copied, setCopied] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const isHighlighted = tweet.followers_count >= followerThreshold;
   const twitterProfileUrl = `https://twitter.com/${tweet.screen_name}`;
   const gmgnUrl = `https://gmgn.ai/sol/token/${tweet.contract_address}`;
@@ -138,76 +145,75 @@ const TweetCard = ({ tweet, index, followerThreshold }) => {
 
             {tweet.followers && tweet.followers.length > 0 && (
               <div className="space-y-1">
-                <HoverCard>
-                  <HoverCardTrigger asChild>
+                <Collapsible
+                  open={isOpen}
+                  onOpenChange={setIsOpen}
+                  className="space-y-2"
+                >
+                  <CollapsibleTrigger asChild>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-auto p-1 text-xs text-muted-foreground hover:bg-blue-50 w-full justify-start"
+                      className="h-auto p-1 text-xs text-muted-foreground hover:bg-blue-50 w-full justify-between group"
                     >
-                      <span className="mr-1">🎩 重要关注者</span>
-                      <Badge
-                        variant="outline"
-                        className="px-1.5 py-0.5 text-xs font-mono bg-blue-100/50"
-                      >
-                        {tweet.followers.length}
-                      </Badge>
-                    </Button>
-                  </HoverCardTrigger>
-                  <HoverCardContent
-                    className="w-80"
-                    side="top"
-                    align="start"
-                    sideOffset={5}
-                    style={{
-                      position: 'fixed',
-                      zIndex: 9999,
-                      transform: 'none'
-                    }}
-                  >
-                    <ScrollArea className="h-[300px]">
-                      <div className="space-y-2">
-                        {tweet.followers.map((follower) => (
-                          <a
-                            key={follower.follower_user_id}
-                            href={`https://twitter.com/${follower.user_info.screen_name}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 p-2 rounded-md hover:bg-gray-100 transition-colors group"
-                          >
-                            <Avatar className="w-8 h-8 ring-2 ring-blue-100">
-                              <AvatarImage src={follower.user_info.profile_image_url_https} />
-                              <AvatarFallback>
-                                {follower.user_info.name?.[0] || '?'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">
-                                {follower.user_info.name || '未知用户'}
-                              </p>
-                              <p className="text-xs text-muted-foreground truncate">
-                                @{follower.user_info.screen_name || 'unknown'}
-                              </p>
-                              <div className="flex gap-2 mt-1">
-                                <Badge variant="outline" className="px-1.5 py-0.5 text-xs">
-                                  👥 {(follower.user_info.followers_count || 0).toLocaleString()}
-                                </Badge>
-                                <Badge variant="outline" className="px-1.5 py-0.5 text-xs">
-                                  👤 {(follower.user_info.friends_count || 0).toLocaleString()}
-                                </Badge>
-                              </div>
-                              {follower.user_info.note && (
-                                <p className="text-xs text-blue-600 mt-1">
-                                  {follower.user_info.note}
-                                </p>
-                              )}
-                            </div>
-                          </a>
-                        ))}
+                      <div className="flex items-center gap-2">
+                        <span>🎩 重要关注者</span>
+                        <Badge
+                          variant="outline"
+                          className="px-1.5 py-0.5 text-xs font-mono bg-blue-100/50"
+                        >
+                          {tweet.followers.length}
+                        </Badge>
                       </div>
-                    </ScrollArea>
-                  </HoverCardContent>
-                </HoverCard>
+                      {isOpen ? (
+                        <ChevronUp className="h-4 w-4 text-muted-foreground transition-transform group-hover:text-blue-500" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-hover:text-blue-500" />
+                      )}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-2">
+                    <div className="max-h-[300px] overflow-y-auto pr-2 space-y-2">
+                      {tweet.followers.map((follower) => (
+                        <a
+                          key={follower.follower_user_id}
+                          href={`https://twitter.com/${follower.user_info.screen_name}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-2 rounded-md hover:bg-gray-100 transition-colors group"
+                        >
+                          <Avatar className="w-8 h-8 ring-2 ring-blue-100">
+                            <AvatarImage src={follower.user_info.profile_image_url_https} />
+                            <AvatarFallback>
+                              {follower.user_info.name?.[0] || '?'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">
+                              {follower.user_info.name || '未知用户'}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              @{follower.user_info.screen_name || 'unknown'}
+                            </p>
+                            <div className="flex gap-2 mt-1">
+                              <Badge variant="outline" className="px-1.5 py-0.5 text-xs">
+                                👥 {(follower.user_info.followers_count || 0).toLocaleString()}
+                              </Badge>
+                              <Badge variant="outline" className="px-1.5 py-0.5 text-xs">
+                                👤 {(follower.user_info.friends_count || 0).toLocaleString()}
+                              </Badge>
+                            </div>
+                            {follower.user_info.note && (
+                              <p className="text-xs text-blue-600 mt-1">
+                                {follower.user_info.note}
+                              </p>
+                            )}
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
 
                 <div className="flex flex-wrap gap-1">
                   {tweet.followers.slice(0, 3).map((follower) => (
@@ -229,11 +235,6 @@ const TweetCard = ({ tweet, index, followerThreshold }) => {
                       </span>
                     </a>
                   ))}
-                  {tweet.followers.length > 3 && (
-                    <span className="text-xs text-muted-foreground self-center ml-1">
-                      +{tweet.followers.length - 3} 更多
-                    </span>
-                  )}
                 </div>
               </div>
             )}
