@@ -13,23 +13,28 @@ import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Loader2 } from "lucide-react";
+import {
+  HoverCard,
+  HoverCardTrigger,
+  HoverCardContent,
+} from "@/components/ui/hover-card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
-// 配置dayjs
 dayjs.extend(relativeTime);
 dayjs.locale("zh-cn");
 
-// 获取推文数据的函数
 const fetchTweets = async () => {
-  const response = await fetch(`/api/tweets?limit=50&offset=0`);
+  const response = await fetch(`/api/tweets`);
   const data = await response.json();
   return data;
 };
 
-// 推文卡片组件
 const TweetCard = ({ tweet, index, followerThreshold }) => {
+  const [copied, setCopied] = useState(false);
   const isHighlighted = tweet.followers_count >= followerThreshold;
   const twitterProfileUrl = `https://twitter.com/${tweet.screen_name}`;
-  const [copied, setCopied] = useState(false);
   const gmgnUrl = `https://gmgn.ai/sol/token/${tweet.contract_address}`;
   const gmgnLogo = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAFLSURBVHgB5ZYxbsIwFIbtqmr3Dj1Bhxa1S5d261RxgoC4BSsTgoWVgZkVASdATGywsBABAydgYGOAxYDhB/xIZAcibMS3vDj+Hfn9fnkJY/cONxVWfU8cj2vNkYztgs8v0T8wyzzqBP/5T5nJz9urOuHtr+Q8Mouqd98BkHiuKOMeS0XSFwfpQN3tOMD5tniFEIHzOHtTPbDvAN152HsdRsb7UMatAZb7zATrDnA4UM79yRvZUkcRvLwnZEx+CRYn6IzuvAW9yVRGOEHB/KUcamSLe30grkxNcccBejb1TCNwwfo7z86BPh/Y7wO4oB0RoA9QdH0hLOPZeCijM/8D2r6vc4Y6QTNHxuD2/gnpjqkj392luuD3SQbqRNhX1v0aAMgcZ5+bLwJ1/Z0DAE7Q6gfWHYh9A5uaOKmLa24gKsZ9QHf2FNNasO7ACmsBgQNQAes8AAAAAElFTkSuQmCC";
 
@@ -49,14 +54,13 @@ const TweetCard = ({ tweet, index, followerThreshold }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.1 }}
     >
-      <Card className={`h-full hover:shadow-lg transition-all bg-white/50 backdrop-blur-sm ${
-        isHighlighted 
-          ? 'border-2 border-amber-400 shadow-lg bg-gradient-to-r from-amber-50/50 to-white/50 ring-2 ring-amber-200' 
-          : 'border-none'
-      }`}>
+      <Card className={`h-full hover:shadow-lg transition-all bg-white/50 backdrop-blur-sm ${isHighlighted
+        ? 'border-2 border-amber-400 shadow-lg bg-gradient-to-r from-amber-50/50 to-white/50 ring-2 ring-amber-200'
+        : 'border-none'
+        }`}>
         <CardHeader className="p-3 pb-0">
           <div className="flex items-center gap-2">
-            <a 
+            <a
               href={twitterProfileUrl}
               target="_blank"
               rel="noopener noreferrer"
@@ -78,7 +82,7 @@ const TweetCard = ({ tweet, index, followerThreshold }) => {
         </CardHeader>
         <CardContent className="p-3 space-y-2">
           <p className="text-sm whitespace-pre-wrap line-clamp-3">{tweet.content}</p>
-          
+
           {tweet.contract_address && (
             <div className="text-xs bg-gray-50 p-2 rounded-md font-mono break-all">
               <div className="flex items-center justify-between gap-2">
@@ -97,22 +101,18 @@ const TweetCard = ({ tweet, index, followerThreshold }) => {
                     className="inline-flex items-center justify-center w-6 h-6 hover:opacity-80 transition-opacity"
                     title="在 GMGN 中查看"
                   >
-                    <img 
-                      src={gmgnLogo} 
-                      alt="GMGN" 
-                      className="w-5 h-5"
-                    />
+                    <img src={gmgnLogo} alt="GMGN" className="w-5 h-5" />
                   </a>
                 </div>
               </div>
             </div>
           )}
-          
+
           <div className="flex flex-wrap gap-2">
             {tweet.tweet_url && (
-              <a 
-                href={tweet.tweet_url} 
-                target="_blank" 
+              <a
+                href={tweet.tweet_url}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors"
               >
@@ -122,17 +122,121 @@ const TweetCard = ({ tweet, index, followerThreshold }) => {
           </div>
         </CardContent>
         <CardFooter className="p-3 pt-0">
-          <div className="flex gap-2 items-center text-xs text-gray-500">
-            <span title="粉丝数量" className="flex items-center gap-1">
-              <span>👥</span>
-              <span className="font-medium">{tweet.followers_count.toLocaleString()}</span>
-              <span className="text-gray-400">粉丝数量</span>
-            </span>
-            <span title="关注数量" className="flex items-center gap-1">
-              <span>👤</span>
-              <span className="font-medium">{tweet.following_count.toLocaleString()}</span>
-              <span className="text-gray-400">关注数量</span>
-            </span>
+          <div className="flex flex-col gap-2 w-full">
+            <div className="flex gap-2 items-center text-xs text-gray-500">
+              <span title="粉丝数量" className="flex items-center gap-1">
+                <span>👥</span>
+                <span className="font-medium">{tweet.followers_count.toLocaleString()}</span>
+                <span className="text-gray-400">粉丝</span>
+              </span>
+              <span title="关注数量" className="flex items-center gap-1">
+                <span>👤</span>
+                <span className="font-medium">{tweet.following_count.toLocaleString()}</span>
+                <span className="text-gray-400">关注</span>
+              </span>
+            </div>
+
+            {tweet.followers && tweet.followers.length > 0 && (
+              <div className="space-y-1">
+                <HoverCard>
+                  <HoverCardTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto p-1 text-xs text-muted-foreground hover:bg-blue-50 w-full justify-start"
+                    >
+                      <span className="mr-1">🎩 重要关注者</span>
+                      <Badge
+                        variant="outline"
+                        className="px-1.5 py-0.5 text-xs font-mono bg-blue-100/50"
+                      >
+                        {tweet.followers.length}
+                      </Badge>
+                    </Button>
+                  </HoverCardTrigger>
+                  <HoverCardContent
+                    className="w-80"
+                    side="top"
+                    align="start"
+                    sideOffset={5}
+                    style={{
+                      position: 'fixed',
+                      zIndex: 9999,
+                      transform: 'none'
+                    }}
+                  >
+                    <ScrollArea className="h-[300px]">
+                      <div className="space-y-2">
+                        {tweet.followers.map((follower) => (
+                          <a
+                            key={follower.follower_user_id}
+                            href={`https://twitter.com/${follower.user_info.screen_name}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 p-2 rounded-md hover:bg-gray-100 transition-colors group"
+                          >
+                            <Avatar className="w-8 h-8 ring-2 ring-blue-100">
+                              <AvatarImage src={follower.user_info.profile_image_url_https} />
+                              <AvatarFallback>
+                                {follower.user_info.name?.[0] || '?'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">
+                                {follower.user_info.name || '未知用户'}
+                              </p>
+                              <p className="text-xs text-muted-foreground truncate">
+                                @{follower.user_info.screen_name || 'unknown'}
+                              </p>
+                              <div className="flex gap-2 mt-1">
+                                <Badge variant="outline" className="px-1.5 py-0.5 text-xs">
+                                  👥 {(follower.user_info.followers_count || 0).toLocaleString()}
+                                </Badge>
+                                <Badge variant="outline" className="px-1.5 py-0.5 text-xs">
+                                  👤 {(follower.user_info.friends_count || 0).toLocaleString()}
+                                </Badge>
+                              </div>
+                              {follower.user_info.note && (
+                                <p className="text-xs text-blue-600 mt-1">
+                                  {follower.user_info.note}
+                                </p>
+                              )}
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </HoverCardContent>
+                </HoverCard>
+
+                <div className="flex flex-wrap gap-1">
+                  {tweet.followers.slice(0, 3).map((follower) => (
+                    <a
+                      key={follower.follower_user_id}
+                      href={`https://twitter.com/${follower.user_info.screen_name}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 hover:bg-blue-100 rounded text-xs text-blue-600 transition-colors group"
+                    >
+                      <Avatar className="w-4 h-4">
+                        <AvatarImage src={follower.user_info.profile_image_url_https} />
+                        <AvatarFallback>
+                          {follower.user_info.name?.[0] || '?'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="truncate max-w-[80px]">
+                        {follower.user_info.name || '未知用户'}
+                      </span>
+                    </a>
+                  ))}
+                  {tweet.followers.length > 3 && (
+                    <span className="text-xs text-muted-foreground self-center ml-1">
+                      +{tweet.followers.length - 3} 更多
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </CardFooter>
       </Card>
@@ -140,7 +244,6 @@ const TweetCard = ({ tweet, index, followerThreshold }) => {
   );
 };
 
-// 加载占位组件
 const TweetSkeleton = () => {
   return (
     <Card className="h-full bg-white/50 backdrop-blur-sm border-none">
@@ -272,16 +375,15 @@ export default function Home() {
                 自动更新
               </span>
               <div className="flex items-center gap-1.5">
-                <div className={`w-2 h-2 rounded-full ${
-                  autoUpdate 
-                    ? isFetching 
-                      ? 'bg-yellow-400 animate-pulse'
-                      : 'bg-green-400' 
-                    : 'bg-gray-400'
-                }`} />
+                <div className={`w-2 h-2 rounded-full ${autoUpdate
+                  ? isFetching
+                    ? 'bg-yellow-400 animate-pulse'
+                    : 'bg-green-400'
+                  : 'bg-gray-400'
+                  }`} />
                 <span className="text-xs text-gray-500">
-                  {autoUpdate 
-                    ? isFetching 
+                  {autoUpdate
+                    ? isFetching
                       ? '更新中...'
                       : `${countdown}秒后更新`
                     : '已暂停'}
@@ -297,13 +399,13 @@ export default function Home() {
           {data.data
             .filter(tweet => !showHighlightedOnly || tweet.followers_count >= followerThreshold)
             .map((tweet, index) => (
-              <TweetCard 
-                key={tweet.tweet_id} 
-                tweet={tweet} 
+              <TweetCard
+                key={tweet.tweet_id}
+                tweet={tweet}
                 index={index}
                 followerThreshold={followerThreshold}
               />
-          ))}
+            ))}
         </div>
       </div>
     </div>
