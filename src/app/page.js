@@ -37,6 +37,42 @@ const fetchTweets = async () => {
   return data;
 };
 
+const CircularProgress = ({ progress, size = 16, strokeWidth = 2, className = "" }) => {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (progress / 100) * circumference;
+
+  return (
+    <div className={`relative inline-flex items-center justify-center ${className}`}>
+      <svg width={size} height={size} className="transform -rotate-90">
+        {/* 背景圆环 */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={strokeWidth}
+          className="text-gray-200"
+        />
+        {/* 进度圆环 */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          className="text-blue-500 transition-all duration-200"
+          strokeLinecap="round"
+        />
+      </svg>
+    </div>
+  );
+};
+
 const TweetCard = ({ tweet, index, followerThreshold }) => {
   const [copied, setCopied] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -157,7 +193,7 @@ const TweetCard = ({ tweet, index, followerThreshold }) => {
                       className="h-auto p-1 text-xs text-muted-foreground hover:bg-blue-50 w-full justify-between group"
                     >
                       <div className="flex items-center gap-2">
-                        <span>🎩 重要关注者</span>
+                        <span>🎩 关注TA的KOL/名人/VC</span>
                         <Badge
                           variant="outline"
                           className="px-1.5 py-0.5 text-xs font-mono bg-blue-100/50"
@@ -273,6 +309,7 @@ export default function Home() {
   const [autoUpdate, setAutoUpdate] = useState(true);
   const [countdown, setCountdown] = useState(10);
   const [showHighlightedOnly, setShowHighlightedOnly] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
 
   const {
     data,
@@ -284,14 +321,14 @@ export default function Home() {
   } = useQuery({
     queryKey: ["tweets"],
     queryFn: fetchTweets,
-    refetchInterval: autoUpdate ? 10000 : false,
+    refetchInterval: autoUpdate && !isHovering ? 10000 : false,
     refetchIntervalInBackground: false,
   });
 
   // 处理倒计时
   useEffect(() => {
     let timer;
-    if (autoUpdate && !isFetching) {
+    if (autoUpdate && !isFetching && !isHovering) {
       const updateTime = dataUpdatedAt + 10000; // 下次更新时间
       timer = setInterval(() => {
         const now = Date.now();
@@ -302,7 +339,7 @@ export default function Home() {
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [autoUpdate, isFetching, dataUpdatedAt]);
+  }, [autoUpdate, isFetching, dataUpdatedAt, isHovering]);
 
   if (isLoading || status === "loading") {
     return (
@@ -376,17 +413,20 @@ export default function Home() {
                 自动更新
               </span>
               <div className="flex items-center gap-1.5">
-                <div className={`w-2 h-2 rounded-full ${autoUpdate
-                  ? isFetching
-                    ? 'bg-yellow-400 animate-pulse'
-                    : 'bg-green-400'
-                  : 'bg-gray-400'
-                  }`} />
+                {autoUpdate && !isHovering && (
+                  <CircularProgress
+                    progress={(countdown / 10) * 100}
+                    size={16}
+                    className={isFetching ? 'animate-pulse' : ''}
+                  />
+                )}
                 <span className="text-xs text-gray-500">
                   {autoUpdate
-                    ? isFetching
-                      ? '更新中...'
-                      : `${countdown}秒后更新`
+                    ? isHovering
+                      ? '已暂停 (鼠标悬停中)'
+                      : isFetching
+                        ? '更新中...'
+                        : `${countdown}秒后更新`
                     : '已暂停'}
                 </span>
               </div>
@@ -396,7 +436,11 @@ export default function Home() {
             </div>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div 
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+          onMouseEnter={() => setIsHovering(true)}
+          onMouseLeave={() => setIsHovering(false)}
+        >
           {data.data
             .filter(tweet => !showHighlightedOnly || tweet.followers_count >= followerThreshold)
             .map((tweet, index) => (
