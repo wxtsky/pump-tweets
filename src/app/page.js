@@ -303,11 +303,24 @@ export default function Home() {
     }
     return 1000;
   });
+  const [kolThreshold, setKolThreshold] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('kolThreshold');
+      return saved ? parseInt(saved, 10) : 0;
+    }
+    return 0;
+  });
   const [autoUpdate, setAutoUpdate] = useState(true);
   const [countdown, setCountdown] = useState(10);
   const [showHighlightedOnly, setShowHighlightedOnly] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [pausedTime, setPausedTime] = useState(null);
+  const [filterLogic, setFilterLogic] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('filterLogic') || 'AND';
+    }
+    return 'AND';
+  });
 
   const {
     data,
@@ -328,6 +341,17 @@ export default function Home() {
     const newValue = Number(value);
     setFollowerThreshold(newValue);
     localStorage.setItem('followerThreshold', newValue.toString());
+  };
+
+  const handleKolThresholdChange = (value) => {
+    const newValue = Number(value);
+    setKolThreshold(newValue);
+    localStorage.setItem('kolThreshold', newValue.toString());
+  };
+
+  const handleFilterLogicChange = (value) => {
+    setFilterLogic(value);
+    localStorage.setItem('filterLogic', value);
   };
 
   useEffect(() => {
@@ -403,7 +427,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
       <div className="container mx-auto">
-        <div className="mb-4 flex items-center gap-4 bg-white/80 p-4 rounded-lg shadow-sm">
+        <div className="mb-4 flex flex-wrap items-center gap-4 bg-white/80 p-4 rounded-lg shadow-sm">
           <div className="flex items-center gap-2">
             <label className="text-sm text-gray-600">粉丝数阈值：</label>
             <Input
@@ -414,7 +438,20 @@ export default function Home() {
               min="0"
             />
             <span className="text-sm text-gray-500">
-              (粉丝数 ≥ {followerThreshold} 的推文将被高亮显示)
+              (粉丝数 ≥ {followerThreshold})
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600">KOL数量阈值：</label>
+            <Input
+              type="number"
+              value={kolThreshold}
+              onChange={(e) => handleKolThresholdChange(e.target.value)}
+              className="w-32"
+              min="0"
+            />
+            <span className="text-sm text-gray-500">
+              (KOL数量 ≥ {kolThreshold})
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -426,6 +463,17 @@ export default function Home() {
             <span className="text-sm text-gray-600">
               仅显示高亮推文
             </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600">筛选条件：</label>
+            <select
+              value={filterLogic}
+              onChange={(e) => handleFilterLogicChange(e.target.value)}
+              className="text-sm border rounded-md px-2 py-1"
+            >
+              <option value="AND">同时满足（且）</option>
+              <option value="OR">满足任一（或）</option>
+            </select>
           </div>
           <div className="flex items-center gap-2 ml-auto">
             <Switch
@@ -467,7 +515,24 @@ export default function Home() {
           onMouseLeave={() => setIsHovering(false)}
         >
           {data.data
-            .filter(tweet => !showHighlightedOnly || tweet.followers_count >= followerThreshold)
+            .filter(tweet => {
+              const meetsFollowerThreshold = tweet.followers_count >= followerThreshold;
+              const meetsKolThreshold = (tweet.followers?.length || 0) >= kolThreshold;
+              
+              if (!showHighlightedOnly) {
+                if (filterLogic === 'AND') {
+                  return meetsFollowerThreshold && meetsKolThreshold;
+                } else {
+                  return meetsFollowerThreshold || meetsKolThreshold;
+                }
+              } else {
+                if (filterLogic === 'AND') {
+                  return meetsFollowerThreshold && meetsKolThreshold;
+                } else {
+                  return meetsFollowerThreshold;
+                }
+              }
+            })
             .map((tweet, index) => (
               <TweetCard
                 key={tweet.tweet_id}
