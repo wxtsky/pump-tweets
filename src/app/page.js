@@ -178,6 +178,16 @@ const TweetCard = ({ tweet, index, followerThreshold, kolThreshold, filterLogic 
                 <span className="font-medium">{tweet.following_count.toLocaleString()}</span>
                 <span className="text-gray-400">关注</span>
               </span>
+              <span title="发盘数量" className="flex items-center gap-1">
+                <span>📝</span>
+                <span className="font-medium">{tweet.unique_contract_count.toLocaleString()}</span>
+                <span className="text-gray-400">发盘</span>
+              </span>
+              <span title="改名次数" className="flex items-center gap-1">
+                <span>🔄</span>
+                <span className="font-medium">{tweet.historical_screen_names.length - 1}</span>
+                <span className="text-gray-400">改名</span>
+              </span>
             </div>
 
             {tweet.followers && tweet.followers.length > 0 && (
