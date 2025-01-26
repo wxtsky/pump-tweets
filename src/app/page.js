@@ -445,87 +445,101 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
       <div className="container mx-auto">
         <div className="mb-4 flex flex-wrap items-center gap-4 bg-white/80 p-4 rounded-lg shadow-sm">
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600">粉丝数阈值：</label>
-            <Input
-              type="number"
-              value={followerThreshold}
-              onChange={(e) => handleThresholdChange(e.target.value)}
-              className="w-32"
-              min="0"
-            />
-            <span className="text-sm text-gray-500">
-              (粉丝数 ≥ {followerThreshold})
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600">KOL数量阈值：</label>
-            <Input
-              type="number"
-              value={kolThreshold}
-              onChange={(e) => handleKolThresholdChange(e.target.value)}
-              className="w-32"
-              min="0"
-            />
-            <span className="text-sm text-gray-500">
-              (KOL数量 ≥ {kolThreshold})
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Switch
-              checked={showHighlightedOnly}
-              onCheckedChange={setShowHighlightedOnly}
-              className="data-[state=checked]:bg-amber-500"
-            />
-            <span className="text-sm text-gray-600">
-              仅显示高亮推文
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600">筛选条件：</label>
-            <select
-              value={filterLogic}
-              onChange={(e) => handleFilterLogicChange(e.target.value)}
-              className="text-sm border rounded-md px-2 py-1"
-            >
-              <option value="AND">同时满足（且）</option>
-              <option value="OR">满足任一（或）</option>
-            </select>
-          </div>
-          <div className="flex items-center gap-2 ml-auto">
-            <Switch
-              checked={autoUpdate}
-              onCheckedChange={setAutoUpdate}
-              className="data-[state=checked]:bg-blue-500"
-            />
+          {/* 筛选条件组 */}
+          <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">
-                自动更新
+              <label className="text-sm text-gray-600">粉丝数阈值：</label>
+              <Input
+                type="number"
+                value={followerThreshold}
+                onChange={(e) => handleThresholdChange(e.target.value)}
+                className="w-24"
+                min="0"
+              />
+              <span className="text-sm text-gray-500">
+                (≥{followerThreshold})
               </span>
-              <div className="flex items-center gap-1.5">
-                {autoUpdate && !isHovering && (
-                  <CircularProgress
-                    progress={(countdown / 10) * 100}
-                    size={16}
-                    className={isFetching ? 'animate-pulse' : ''}
-                  />
-                )}
-                <span className="text-xs text-gray-500">
-                  {autoUpdate
-                    ? isHovering
-                      ? '已暂停 (鼠标悬停中)'
-                      : isFetching
-                        ? '更新中...'
-                        : `${countdown}秒后更新`
-                    : '已暂停'}
-                </span>
-              </div>
-              {isFetching && (
-                <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
-              )}
             </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600">KOL数量阈值：</label>
+              <Input
+                type="number"
+                value={kolThreshold}
+                onChange={(e) => handleKolThresholdChange(e.target.value)}
+                className="w-24"
+                min="0"
+              />
+              <span className="text-sm text-gray-500">
+                (≥{kolThreshold})
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600">筛选条件：</label>
+              <select
+                value={filterLogic}
+                onChange={(e) => handleFilterLogicChange(e.target.value)}
+                className="text-sm border rounded-md px-2 py-1"
+              >
+                <option value="AND">同时满足</option>
+                <option value="OR">满足任一</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={showHighlightedOnly}
+                onCheckedChange={setShowHighlightedOnly}
+                className="data-[state=checked]:bg-amber-500"
+              />
+              <span className="text-sm text-gray-600">
+                仅显示满足条件
+              </span>
+            </div>
+          </div>
 
-            <div className="flex items-center gap-2 ml-4 border-l pl-4">
+          {/* 分隔线 */}
+          <div className="h-8 w-px bg-gray-200 mx-2"></div>
+
+          {/* 自动更新组 */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={autoUpdate}
+                onCheckedChange={setAutoUpdate}
+                className="data-[state=checked]:bg-blue-500"
+              />
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">自动更新</span>
+                <div className="flex items-center gap-1.5">
+                  {autoUpdate && !isHovering && (
+                    <CircularProgress
+                      progress={(countdown / 10) * 100}
+                      size={16}
+                      className={isFetching ? 'animate-pulse' : ''}
+                    />
+                  )}
+                  <span className="text-xs text-gray-500">
+                    {autoUpdate
+                      ? isHovering
+                        ? '已暂停'
+                        : isFetching
+                          ? '更新中...'
+                          : `${countdown}秒`
+                      : '已停止'}
+                  </span>
+                </div>
+                {isFetching && (
+                  <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* 分隔线 */}
+          <div className="h-8 w-px bg-gray-200 mx-2"></div>
+
+          {/* 状态信息组 */}
+          <div className="flex items-center gap-4 ml-auto">
+            <div className="flex items-center gap-2">
               <div className="relative flex items-center">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <div className="absolute -inset-1 bg-green-500 rounded-full animate-ping opacity-20"></div>
@@ -534,6 +548,16 @@ export default function Home() {
                 {data.meta.activeUsers} 人在线
               </span>
             </div>
+            <a
+              href="https://redeemsol.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 hover:scale-105 px-3 py-1.5 rounded-full bg-gradient-to-r from-green-50 to-blue-50 border border-green-100 hover:border-blue-200 hover:shadow-sm transition-all"
+            >
+              <span className="text-lg">♻️</span>
+              <span className="font-medium">关闭空账户回收SOL</span>
+              <span className="text-xs text-blue-500">立即体验 →</span>
+            </a>
           </div>
         </div>
         <div
