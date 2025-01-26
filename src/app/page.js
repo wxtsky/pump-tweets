@@ -70,11 +70,11 @@ const CircularProgress = ({ progress, size = 16, strokeWidth = 2, className = ""
 const TweetCard = ({ tweet, index, followerThreshold, kolThreshold, filterLogic }) => {
   const [copied, setCopied] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  
+
   // 更新高亮逻辑
   const meetsFollowerThreshold = tweet.followers_count >= followerThreshold;
   const meetsKolThreshold = (tweet.followers?.length || 0) >= kolThreshold;
-  const isHighlighted = filterLogic === 'AND' 
+  const isHighlighted = filterLogic === 'AND'
     ? meetsFollowerThreshold && meetsKolThreshold
     : meetsFollowerThreshold || meetsKolThreshold;
 
@@ -514,6 +514,16 @@ export default function Home() {
                 <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
               )}
             </div>
+
+            <div className="flex items-center gap-2 ml-4 border-l pl-4">
+              <div className="relative flex items-center">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <div className="absolute -inset-1 bg-green-500 rounded-full animate-ping opacity-20"></div>
+              </div>
+              <span className="text-sm text-gray-600">
+                {data.meta.activeUsers} 人在线
+              </span>
+            </div>
           </div>
         </div>
         <div
@@ -525,7 +535,7 @@ export default function Home() {
             .filter(tweet => {
               const meetsFollowerThreshold = tweet.followers_count >= followerThreshold;
               const meetsKolThreshold = (tweet.followers?.length || 0) >= kolThreshold;
-              const isHighlighted = filterLogic === 'AND' 
+              const isHighlighted = filterLogic === 'AND'
                 ? meetsFollowerThreshold && meetsKolThreshold
                 : meetsFollowerThreshold || meetsKolThreshold;
 
