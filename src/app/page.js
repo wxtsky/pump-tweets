@@ -193,7 +193,7 @@ const TweetCard = ({ tweet, index, followerThreshold }) => {
                       className="h-auto p-1 text-xs text-muted-foreground hover:bg-blue-50 w-full justify-between group"
                     >
                       <div className="flex items-center gap-2">
-                        <span>🎩 关注TA的KOL/名人/VC</span>
+                        <span>🎩 关注TA的KOL/名人/VC(点击展开)</span>
                         <Badge
                           variant="outline"
                           className="px-1.5 py-0.5 text-xs font-mono bg-blue-100/50"
@@ -252,7 +252,7 @@ const TweetCard = ({ tweet, index, followerThreshold }) => {
                 </Collapsible>
 
                 <div className="flex flex-wrap gap-1">
-                  {tweet.followers.slice(0, 3).map((follower) => (
+                  {tweet.followers.slice(0, 9).map((follower) => (
                     <a
                       key={follower.follower_user_id}
                       href={`https://twitter.com/${follower.user_info.screen_name}`}
@@ -266,9 +266,6 @@ const TweetCard = ({ tweet, index, followerThreshold }) => {
                           {follower.user_info.name?.[0] || '?'}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="truncate max-w-[80px]">
-                        {follower.user_info.name || '未知用户'}
-                      </span>
                     </a>
                   ))}
                 </div>
@@ -436,7 +433,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-        <div 
+        <div
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
           onMouseEnter={() => setIsHovering(true)}
           onMouseLeave={() => setIsHovering(false)}
