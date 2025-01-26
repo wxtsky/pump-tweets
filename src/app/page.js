@@ -258,9 +258,9 @@ const TweetCard = ({ tweet, index, followerThreshold }) => {
                       href={`https://twitter.com/${follower.user_info.screen_name}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 hover:bg-blue-100 rounded text-xs text-blue-600 transition-colors group"
+                      className="block"
                     >
-                      <Avatar className="w-4 h-4">
+                      <Avatar className="w-6 h-6 hover:ring-2 hover:ring-blue-200 transition-all">
                         <AvatarImage src={follower.user_info.profile_image_url_https} />
                         <AvatarFallback>
                           {follower.user_info.name?.[0] || '?'}
