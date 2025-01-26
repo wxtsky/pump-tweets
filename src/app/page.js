@@ -13,12 +13,6 @@ import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Loader2 } from "lucide-react";
-import {
-  HoverCard,
-  HoverCardTrigger,
-  HoverCardContent,
-} from "@/components/ui/hover-card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -307,6 +301,7 @@ export default function Home() {
   const [countdown, setCountdown] = useState(10);
   const [showHighlightedOnly, setShowHighlightedOnly] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
+  const [pausedTime, setPausedTime] = useState(null);
 
   const {
     data,
@@ -315,28 +310,52 @@ export default function Home() {
     isLoading,
     isFetching,
     dataUpdatedAt,
+    refetch,
   } = useQuery({
     queryKey: ["tweets"],
     queryFn: fetchTweets,
-    refetchInterval: autoUpdate && !isHovering ? 10000 : false,
+    refetchInterval: false,
     refetchIntervalInBackground: false,
   });
 
   // 处理倒计时
   useEffect(() => {
     let timer;
-    if (autoUpdate && !isFetching && !isHovering) {
-      const updateTime = dataUpdatedAt + 10000; // 下次更新时间
-      timer = setInterval(() => {
-        const now = Date.now();
-        const remaining = Math.max(0, Math.ceil((updateTime - now) / 1000));
-        setCountdown(remaining);
-      }, 1000);
+    if (autoUpdate && !isFetching) {
+      if (!isHovering) {
+        const startTime = Date.now();
+        const initialCountdown = pausedTime || 10;
+        setCountdown(initialCountdown);
+        
+        timer = setInterval(() => {
+          const elapsed = Math.floor((Date.now() - startTime) / 1000);
+          const remaining = Math.max(0, initialCountdown - elapsed);
+          setCountdown(remaining);
+          
+          // 当倒计时到达0时，立即触发refetch
+          if (remaining === 0) {
+            clearInterval(timer);
+            if (typeof refetch === 'function') {
+              refetch();
+            }
+          }
+        }, 200); // 缩短检查间隔，使响应更及时
+      } else {
+        setPausedTime(countdown);
+      }
     }
+
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [autoUpdate, isFetching, dataUpdatedAt, isHovering]);
+  }, [autoUpdate, isFetching, isHovering, pausedTime]);
+
+  // 重置暂停时间
+  useEffect(() => {
+    if (!isHovering) {
+      setPausedTime(null);
+    }
+  }, [dataUpdatedAt]);
 
   if (isLoading || status === "loading") {
     return (
