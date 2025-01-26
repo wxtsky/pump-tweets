@@ -67,10 +67,17 @@ const CircularProgress = ({ progress, size = 16, strokeWidth = 2, className = ""
   );
 };
 
-const TweetCard = ({ tweet, index, followerThreshold }) => {
+const TweetCard = ({ tweet, index, followerThreshold, kolThreshold, filterLogic }) => {
   const [copied, setCopied] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const isHighlighted = tweet.followers_count >= followerThreshold;
+  
+  // 更新高亮逻辑
+  const meetsFollowerThreshold = tweet.followers_count >= followerThreshold;
+  const meetsKolThreshold = (tweet.followers?.length || 0) >= kolThreshold;
+  const isHighlighted = filterLogic === 'AND' 
+    ? meetsFollowerThreshold && meetsKolThreshold
+    : meetsFollowerThreshold || meetsKolThreshold;
+
   const twitterProfileUrl = `https://twitter.com/${tweet.screen_name}`;
   const gmgnUrl = `https://gmgn.ai/sol/token/0frFvctC_${tweet.contract_address}`;
   const gmgnLogo = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAFLSURBVHgB5ZYxbsIwFIbtqmr3Dj1Bhxa1S5d261RxgoC4BSsTgoWVgZkVASdATGywsBABAydgYGOAxYDhB/xIZAcibMS3vDj+Hfn9fnkJY/cONxVWfU8cj2vNkYztgs8v0T8wyzzqBP/5T5nJz9urOuHtr+Q8Mouqd98BkHiuKOMeS0XSFwfpQN3tOMD5tniFEIHzOHtTPbDvAN152HsdRsb7UMatAZb7zATrDnA4UM79yRvZUkcRvLwnZEx+CRYn6IzuvAW9yVRGOEHB/KUcamSLe30grkxNcccBejb1TCNwwfo7z86BPh/Y7wO4oB0RoA9QdH0hLOPZeCijM/8D2r6vc4Y6QTNHxuD2/gnpjqkj392luuD3SQbqRNhX1v0aAMgcZ5+bLwJ1/Z0DAE7Q6gfWHYh9A5uaOKmLa24gKsZ9QHf2FNNasO7ACmsBgQNQAes8AAAAAElFTkSuQmCC";
@@ -518,20 +525,11 @@ export default function Home() {
             .filter(tweet => {
               const meetsFollowerThreshold = tweet.followers_count >= followerThreshold;
               const meetsKolThreshold = (tweet.followers?.length || 0) >= kolThreshold;
-              
-              if (!showHighlightedOnly) {
-                if (filterLogic === 'AND') {
-                  return meetsFollowerThreshold && meetsKolThreshold;
-                } else {
-                  return meetsFollowerThreshold || meetsKolThreshold;
-                }
-              } else {
-                if (filterLogic === 'AND') {
-                  return meetsFollowerThreshold && meetsKolThreshold;
-                } else {
-                  return meetsFollowerThreshold;
-                }
-              }
+              const isHighlighted = filterLogic === 'AND' 
+                ? meetsFollowerThreshold && meetsKolThreshold
+                : meetsFollowerThreshold || meetsKolThreshold;
+
+              return showHighlightedOnly ? isHighlighted : true;
             })
             .map((tweet, index) => (
               <TweetCard
@@ -539,6 +537,8 @@ export default function Home() {
                 tweet={tweet}
                 index={index}
                 followerThreshold={followerThreshold}
+                kolThreshold={kolThreshold}
+                filterLogic={filterLogic}
               />
             ))}
         </div>
