@@ -72,7 +72,7 @@ const TweetCard = ({ tweet, index, followerThreshold }) => {
   const [isOpen, setIsOpen] = useState(false);
   const isHighlighted = tweet.followers_count >= followerThreshold;
   const twitterProfileUrl = `https://twitter.com/${tweet.screen_name}`;
-  const gmgnUrl = `https://gmgn.ai/sol/token/${tweet.contract_address}`;
+  const gmgnUrl = `https://gmgn.ai/sol/token/0frFvctC_${tweet.contract_address}`;
   const gmgnLogo = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAFLSURBVHgB5ZYxbsIwFIbtqmr3Dj1Bhxa1S5d261RxgoC4BSsTgoWVgZkVASdATGywsBABAydgYGOAxYDhB/xIZAcibMS3vDj+Hfn9fnkJY/cONxVWfU8cj2vNkYztgs8v0T8wyzzqBP/5T5nJz9urOuHtr+Q8Mouqd98BkHiuKOMeS0XSFwfpQN3tOMD5tniFEIHzOHtTPbDvAN152HsdRsb7UMatAZb7zATrDnA4UM79yRvZUkcRvLwnZEx+CRYn6IzuvAW9yVRGOEHB/KUcamSLe30grkxNcccBejb1TCNwwfo7z86BPh/Y7wO4oB0RoA9QdH0hLOPZeCijM/8D2r6vc4Y6QTNHxuD2/gnpjqkj392luuD3SQbqRNhX1v0aAMgcZ5+bLwJ1/Z0DAE7Q6gfWHYh9A5uaOKmLa24gKsZ9QHf2FNNasO7ACmsBgQNQAes8AAAAAElFTkSuQmCC";
 
   const copyToClipboard = async (text) => {
@@ -296,7 +296,13 @@ const TweetSkeleton = () => {
 };
 
 export default function Home() {
-  const [followerThreshold, setFollowerThreshold] = useState(1000);
+  const [followerThreshold, setFollowerThreshold] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('followerThreshold');
+      return saved ? parseInt(saved, 10) : 1000;
+    }
+    return 1000;
+  });
   const [autoUpdate, setAutoUpdate] = useState(true);
   const [countdown, setCountdown] = useState(10);
   const [showHighlightedOnly, setShowHighlightedOnly] = useState(false);
@@ -318,7 +324,12 @@ export default function Home() {
     refetchIntervalInBackground: false,
   });
 
-  // 处理倒计时
+  const handleThresholdChange = (value) => {
+    const newValue = Number(value);
+    setFollowerThreshold(newValue);
+    localStorage.setItem('followerThreshold', newValue.toString());
+  };
+
   useEffect(() => {
     let timer;
     if (autoUpdate && !isFetching) {
@@ -326,20 +337,19 @@ export default function Home() {
         const startTime = Date.now();
         const initialCountdown = pausedTime || 10;
         setCountdown(initialCountdown);
-        
+
         timer = setInterval(() => {
           const elapsed = Math.floor((Date.now() - startTime) / 1000);
           const remaining = Math.max(0, initialCountdown - elapsed);
           setCountdown(remaining);
-          
-          // 当倒计时到达0时，立即触发refetch
+
           if (remaining === 0) {
             clearInterval(timer);
             if (typeof refetch === 'function') {
               refetch();
             }
           }
-        }, 200); // 缩短检查间隔，使响应更及时
+        }, 200);
       } else {
         setPausedTime(countdown);
       }
@@ -350,7 +360,6 @@ export default function Home() {
     };
   }, [autoUpdate, isFetching, isHovering, pausedTime]);
 
-  // 重置暂停时间
   useEffect(() => {
     if (!isHovering) {
       setPausedTime(null);
@@ -400,7 +409,7 @@ export default function Home() {
             <Input
               type="number"
               value={followerThreshold}
-              onChange={(e) => setFollowerThreshold(Number(e.target.value))}
+              onChange={(e) => handleThresholdChange(e.target.value)}
               className="w-32"
               min="0"
             />
