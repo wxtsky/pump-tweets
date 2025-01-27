@@ -555,7 +555,7 @@ export default function Home() {
               className="flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 hover:scale-105 px-3 py-1.5 rounded-full bg-gradient-to-r from-green-50 to-blue-50 border border-green-100 hover:border-blue-200 hover:shadow-sm transition-all"
             >
               <span className="text-lg">♻️</span>
-              <span className="font-medium">关闭空账户回收SOL</span>
+              <span className="font-medium">回收SOL</span>
               <span className="text-xs text-blue-500">立即体验 →</span>
             </a>
           </div>
