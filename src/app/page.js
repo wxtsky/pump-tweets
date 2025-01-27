@@ -67,7 +67,7 @@ const CircularProgress = ({ progress, size = 16, strokeWidth = 2, className = ""
   );
 };
 
-const TweetCard = ({ tweet, index, followerThreshold, kolThreshold, filterLogic }) => {
+const TweetCard = ({ tweet, index, followerThreshold, kolThreshold, filterLogic, onBlock, isBlocked }) => {
   const [copied, setCopied] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -122,6 +122,23 @@ const TweetCard = ({ tweet, index, followerThreshold, kolThreshold, filterLogic 
             <div className="ml-auto text-xs text-gray-500">
               {dayjs(tweet.created_at).fromNow()}
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onBlock();
+              }}
+              className="ml-auto text-gray-500 hover:text-red-500"
+              title="拉黑此用户"
+            >
+              <span className="sr-only">拉黑用户</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+              </svg>
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="p-3 space-y-2">
@@ -339,6 +356,18 @@ export default function Home() {
     return 'AND';
   });
 
+  // 添加拉黑列表状态
+  const [blockedUsers, setBlockedUsers] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('blockedUsers');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
+
+  // 添加拉黑列表是否展开的状态
+  const [isBlockListOpen, setIsBlockListOpen] = useState(false);
+
   const {
     data,
     error,
@@ -369,6 +398,26 @@ export default function Home() {
   const handleFilterLogicChange = (value) => {
     setFilterLogic(value);
     localStorage.setItem('filterLogic', value);
+  };
+
+  // 修改拉黑用户的处理函数
+  const handleBlockUser = (user) => {
+    const newBlockedUsers = [...blockedUsers, {
+      id: user.user_id,  // 使用 user_id 作为唯一标识
+      screenName: user.screen_name,
+      name: user.name,
+      profileImage: user.profile_image_url,
+      blockedAt: new Date().toISOString()
+    }];
+    setBlockedUsers(newBlockedUsers);
+    localStorage.setItem('blockedUsers', JSON.stringify(newBlockedUsers));
+  };
+
+  // 处理取消拉黑
+  const handleUnblockUser = (userId) => {
+    const newBlockedUsers = blockedUsers.filter(user => user.id !== userId);
+    setBlockedUsers(newBlockedUsers);
+    localStorage.setItem('blockedUsers', JSON.stringify(newBlockedUsers));
   };
 
   useEffect(() => {
@@ -444,122 +493,150 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
       <div className="container mx-auto">
-        <div className="mb-4 flex flex-wrap items-center gap-4 bg-white/80 p-4 rounded-lg shadow-sm">
-          {/* 筛选条件组 */}
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600">粉丝数阈值：</label>
+        <div className="mb-4 flex flex-wrap items-center gap-2 bg-white/80 px-3 py-2 rounded-lg shadow-sm text-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <label className="text-gray-600">筛选：用户粉丝 ≥</label>
               <Input
                 type="number"
                 value={followerThreshold}
                 onChange={(e) => handleThresholdChange(e.target.value)}
-                className="w-24"
+                className="w-20 h-7 text-sm"
                 min="0"
               />
-              <span className="text-sm text-gray-500">
-                (≥{followerThreshold})
-              </span>
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600">KOL数量阈值：</label>
+            <select
+              value={filterLogic}
+              onChange={(e) => handleFilterLogicChange(e.target.value)}
+              className="h-7 text-sm border rounded-md px-2"
+            >
+              <option value="AND">且</option>
+              <option value="OR">或</option>
+            </select>
+            <div className="flex items-center gap-1.5">
+              <label className="text-gray-600">KOL关注 ≥</label>
               <Input
                 type="number"
                 value={kolThreshold}
                 onChange={(e) => handleKolThresholdChange(e.target.value)}
-                className="w-24"
+                className="w-20 h-7 text-sm"
                 min="0"
               />
-              <span className="text-sm text-gray-500">
-                (≥{kolThreshold})
-              </span>
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600">筛选条件：</label>
-              <select
-                value={filterLogic}
-                onChange={(e) => handleFilterLogicChange(e.target.value)}
-                className="text-sm border rounded-md px-2 py-1"
-              >
-                <option value="AND">同时满足</option>
-                <option value="OR">满足任一</option>
-              </select>
-            </div>
-            <div className="flex items-center gap-2">
+
+            <div className="flex items-center gap-1.5">
               <Switch
                 checked={showHighlightedOnly}
                 onCheckedChange={setShowHighlightedOnly}
-                className="data-[state=checked]:bg-amber-500"
+                className="data-[state=checked]:bg-amber-500 h-5 w-9"
               />
-              <span className="text-sm text-gray-600">
-                仅显示满足条件
+              <span className="text-gray-600">仅显示符合条件</span>
+            </div>
+          </div>
+
+          <div className="h-6 w-px bg-gray-200 mx-1"></div>
+
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={autoUpdate}
+              onCheckedChange={setAutoUpdate}
+              className="data-[state=checked]:bg-blue-500 h-5 w-9"
+            />
+            <div className="flex items-center gap-1.5">
+              <span className="text-gray-600">自动更新</span>
+              {autoUpdate && !isHovering && (
+                <CircularProgress
+                  progress={(countdown / 10) * 100}
+                  size={14}
+                  className={isFetching ? 'animate-pulse' : ''}
+                />
+              )}
+              <span className="text-xs text-gray-500">
+                {autoUpdate
+                  ? isHovering
+                    ? '已暂停'
+                    : isFetching
+                      ? '更新中'
+                      : `${countdown}秒`
+                  : '已停止'}
               </span>
+              {isFetching && (
+                <Loader2 className="h-3 w-3 animate-spin text-blue-500" />
+              )}
             </div>
           </div>
 
-          {/* 分隔线 */}
-          <div className="h-8 w-px bg-gray-200 mx-2"></div>
+          <div className="h-6 w-px bg-gray-200 mx-1"></div>
 
-          {/* 自动更新组 */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={autoUpdate}
-                onCheckedChange={setAutoUpdate}
-                className="data-[state=checked]:bg-blue-500"
-              />
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">自动更新</span>
-                <div className="flex items-center gap-1.5">
-                  {autoUpdate && !isHovering && (
-                    <CircularProgress
-                      progress={(countdown / 10) * 100}
-                      size={16}
-                      className={isFetching ? 'animate-pulse' : ''}
-                    />
-                  )}
-                  <span className="text-xs text-gray-500">
-                    {autoUpdate
-                      ? isHovering
-                        ? '已暂停'
-                        : isFetching
-                          ? '更新中...'
-                          : `${countdown}秒`
-                      : '已停止'}
-                  </span>
-                </div>
-                {isFetching && (
-                  <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
-                )}
-              </div>
-            </div>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsBlockListOpen(!isBlockListOpen)}
+            className="h-7 px-2 flex items-center gap-1.5"
+          >
+            <span>已拉黑</span>
+            <Badge variant="secondary" className="h-5">{blockedUsers.length}</Badge>
+          </Button>
 
-          {/* 分隔线 */}
-          <div className="h-8 w-px bg-gray-200 mx-2"></div>
-
-          {/* 状态信息组 */}
-          <div className="flex items-center gap-4 ml-auto">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ml-auto">
+            <div className="flex items-center gap-1.5">
               <div className="relative flex items-center">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
                 <div className="absolute -inset-1 bg-green-500 rounded-full animate-ping opacity-20"></div>
               </div>
-              <span className="text-sm text-gray-600">
-                {data.meta.activeUsers} 人在线
+              <span className="text-gray-600">
+                {data.meta.activeUsers}人在线
               </span>
             </div>
             <a
               href="https://redeemsol.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 hover:scale-105 px-3 py-1.5 rounded-full bg-gradient-to-r from-green-50 to-blue-50 border border-green-100 hover:border-blue-200 hover:shadow-sm transition-all"
+              className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 hover:scale-105 px-2 py-1 rounded-full bg-gradient-to-r from-green-50 to-blue-50 border border-green-100 hover:border-blue-200 hover:shadow-sm transition-all"
             >
-              <span className="text-lg">♻️</span>
+              <span className="text-base">♻️</span>
               <span className="font-medium">回收SOL</span>
-              <span className="text-xs text-blue-500">立即体验 →</span>
+              <span className="text-xs text-blue-500">→</span>
             </a>
           </div>
         </div>
+
+        <Collapsible open={isBlockListOpen} onOpenChange={setIsBlockListOpen}>
+          <CollapsibleContent>
+            <div className="mb-4 bg-white/80 p-4 rounded-lg shadow-sm">
+              <h3 className="text-lg font-medium mb-4">已拉黑用户列表</h3>
+              {blockedUsers.length === 0 ? (
+                <p className="text-gray-500 text-sm">暂无拉黑用户</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {blockedUsers.map((user) => (
+                    <div key={user.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="w-8 h-8">
+                          <AvatarImage src={user.profileImage} />
+                          <AvatarFallback>{user.name[0]}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium text-sm">{user.name}</p>
+                          <p className="text-xs text-gray-500">@{user.screenName}</p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleUnblockUser(user.id)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        取消拉黑
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
         <div
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
           onMouseEnter={() => setIsHovering(true)}
@@ -567,6 +644,10 @@ export default function Home() {
         >
           {data.data
             .filter(tweet => {
+              // 过滤掉拉黑用户的推文
+              if (blockedUsers.some(user => user.id === tweet.user_id)) {
+                return false;
+              }
               const meetsFollowerThreshold = tweet.followers_count >= followerThreshold;
               const meetsKolThreshold = (tweet.followers?.length || 0) >= kolThreshold;
               const isHighlighted = filterLogic === 'AND'
@@ -583,6 +664,8 @@ export default function Home() {
                 followerThreshold={followerThreshold}
                 kolThreshold={kolThreshold}
                 filterLogic={filterLogic}
+                onBlock={() => handleBlockUser(tweet)}
+                isBlocked={blockedUsers.some(user => user.id === tweet.user_id)}
               />
             ))}
         </div>
