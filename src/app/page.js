@@ -25,8 +25,27 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 dayjs.extend(relativeTime);
 dayjs.locale("zh-cn");
 
+// 添加 UUID 生成和获取函数
+const getOrCreateUUID = () => {
+  if (typeof window !== 'undefined') {
+    let uuid = localStorage.getItem('visitorUUID');
+    if (!uuid) {
+      uuid = crypto.randomUUID();
+      localStorage.setItem('visitorUUID', uuid);
+    }
+    return uuid;
+  }
+  return '';
+};
+
+// 修改 fetchTweets 函数
 const fetchTweets = async () => {
-  const response = await fetch(`/api/tweets`);
+  const uuid = getOrCreateUUID();
+  const response = await fetch(`/api/tweets`, {
+    headers: {
+      'X-Visitor-UUID': uuid
+    }
+  });
   const data = await response.json();
   return data;
 };
