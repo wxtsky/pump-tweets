@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/zh-cn";
+import Link from "next/link";
 
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -598,6 +599,15 @@ export default function Home() {
           </Button>
 
           <div className="flex items-center gap-2 ml-auto">
+            <Link href="/ca">
+              <Button
+                size="sm"
+                className="h-7 px-2.5 flex items-center gap-1.5 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white hover:shadow-md transition-all"
+              >
+                <span className="text-sm">🚀</span>
+                <span className="text-xs font-medium">CA分析</span>
+              </Button>
+            </Link>
             <div className="flex items-center gap-1.5">
               <div className="relative flex items-center">
                 <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
