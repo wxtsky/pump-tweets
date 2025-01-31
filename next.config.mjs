@@ -1,5 +1,30 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    async headers() {
+        return [
+            {
+                source: '/api/:path*',
+                headers: [
+                    {
+                        key: 'Access-Control-Allow-Origin',
+                        value: 'https://x.com'
+                    },
+                    {
+                        key: 'Access-Control-Allow-Methods',
+                        value: 'GET, POST, PUT, DELETE, OPTIONS'
+                    },
+                    {
+                        key: 'Access-Control-Allow-Headers',
+                        value: 'X-Requested-With, Content-Type, Accept'
+                    },
+                    {
+                        key: 'Access-Control-Allow-Credentials',
+                        value: 'true'
+                    }
+                ]
+            }
+        ]
+    },
     async rewrites() {
         return [
             {

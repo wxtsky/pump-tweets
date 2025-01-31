@@ -15,7 +15,7 @@
             "headers": [
                 {
                     "key": "Access-Control-Allow-Origin",
-                    "value": "*"
+                    "value": "https://x.com"
                 },
                 {
                     "key": "Access-Control-Allow-Methods",
@@ -24,6 +24,10 @@
                 {
                     "key": "Access-Control-Allow-Headers",
                     "value": "X-Requested-With, Content-Type, Accept"
+                },
+                {
+                    "key": "Access-Control-Allow-Credentials",
+                    "value": "true"
                 }
             ]
         }
