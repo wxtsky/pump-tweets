@@ -618,6 +618,18 @@ export default function Home() {
               <span className="font-medium">回收SOL</span>
               <span className="text-xs text-blue-500">→</span>
             </a>
+            
+            {/* 新增问卷分析按钮 */}
+            <a
+              href="https://www.wjx.cn/vm/rKyTKKq.aspx#"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-purple-600 hover:scale-105 px-2 py-1 rounded-full bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-100 hover:border-pink-200 hover:shadow-sm transition-all"
+            >
+              <span className="text-base">📊</span>
+              <span className="font-medium">问卷分析</span>
+              <span className="text-xs text-purple-500">→</span>
+            </a>
           </div>
         </div>
 
