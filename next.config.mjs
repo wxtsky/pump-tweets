@@ -1,18 +1,23 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     async rewrites() {
+        const isProd = process.env.NODE_ENV === 'production';
+        const baseUrl = isProd 
+            ? 'http://107.175.36.39:3000'  // 请替换为您的生产环境 API 地址
+            : 'http://localhost:3001';       // 开发环境 API 地址
+
         return [
             {
                 source: '/api/tweets',
-                destination: 'http://107.175.36.39:3000/tweets'
+                destination: `${baseUrl}/tweets`
             },
             {
                 source: '/api/token-analysis/:path*',
-                destination: 'http://107.175.36.39:3000/token-analysis/:path*'
+                destination: `${baseUrl}/token-analysis/:path*`
             },
             {
                 source: '/api/user/:username',
-                destination: 'http://107.175.36.39:3000/user/:username'
+                destination: `${baseUrl}/user/:username`
             }
         ]
     }
