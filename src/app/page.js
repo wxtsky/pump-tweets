@@ -689,7 +689,7 @@ export default function Home() {
               className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 hover:scale-105 px-2 py-1 rounded-full bg-gradient-to-r from-green-50 to-blue-50 border border-green-100 hover:border-blue-200 hover:shadow-sm transition-all"
             >
               <span className="text-base">♻️</span>
-              <span className="font-medium">回收SOL</span>
+              <span className="font-medium">免费回收领取SOL</span>
               <span className="text-xs text-blue-500">→</span>
             </a>
             <a
