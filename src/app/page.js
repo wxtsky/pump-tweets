@@ -362,6 +362,20 @@ export default function Home() {
     }
     return 0;
   });
+  const [renameThreshold, setRenameThreshold] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('renameThreshold');
+      return saved ? parseInt(saved, 10) : 1;
+    }
+    return 1;
+  });
+  const [contractThreshold, setContractThreshold] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('contractThreshold');
+      return saved ? parseInt(saved, 10) : 1;
+    }
+    return 1;
+  });
   const [autoUpdate, setAutoUpdate] = useState(true);
   const [countdown, setCountdown] = useState(10);
   const [showHighlightedOnly, setShowHighlightedOnly] = useState(false);
@@ -411,6 +425,18 @@ export default function Home() {
     const newValue = Number(value);
     setKolThreshold(newValue);
     localStorage.setItem('kolThreshold', newValue.toString());
+  };
+
+  const handleRenameThresholdChange = (value) => {
+    const newValue = Number(value);
+    setRenameThreshold(newValue);
+    localStorage.setItem('renameThreshold', newValue.toString());
+  };
+
+  const handleContractThresholdChange = (value) => {
+    const newValue = Number(value);
+    setContractThreshold(newValue);
+    localStorage.setItem('contractThreshold', newValue.toString());
   };
 
   const handleFilterLogicChange = (value) => {
@@ -511,44 +537,76 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
       <div className="container mx-auto">
-        <div className="mb-4 flex flex-wrap items-center gap-2 bg-white/80 px-3 py-2 rounded-lg shadow-sm text-sm">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              <label className="text-gray-600">筛选：用户粉丝 ≥</label>
-              <Input
-                type="number"
-                value={followerThreshold}
-                onChange={(e) => handleThresholdChange(e.target.value)}
-                className="w-20 h-7 text-sm"
-                min="0"
-              />
-            </div>
-            <select
-              value={filterLogic}
-              onChange={(e) => handleFilterLogicChange(e.target.value)}
-              className="h-7 text-sm border rounded-md px-2"
-            >
-              <option value="AND">且</option>
-              <option value="OR">或</option>
-            </select>
-            <div className="flex items-center gap-1.5">
-              <label className="text-gray-600">KOL关注 ≥</label>
-              <Input
-                type="number"
-                value={kolThreshold}
-                onChange={(e) => handleKolThresholdChange(e.target.value)}
-                className="w-20 h-7 text-sm"
-                min="0"
-              />
+        <div className="mb-0 flex flex-wrap items-center gap-1 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg shadow-md sticky top-0 z-50 border border-gray-100">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* 第一组筛选条件：粉丝/KOL */}
+            <div className="flex items-center gap-2 p-1.5 pr-3 bg-blue-50 rounded-lg border border-blue-100">
+              <div className="flex items-center gap-1.5">
+                <span className="text-blue-600">粉丝≥</span>
+                <Input
+                  type="number"
+                  value={followerThreshold}
+                  onChange={(e) => handleThresholdChange(e.target.value)}
+                  className="w-20 h-7 text-sm border-blue-200 bg-white"
+                  min="0"
+                />
+              </div>
+
+              <select
+                value={filterLogic}
+                onChange={(e) => handleFilterLogicChange(e.target.value)}
+                className="h-7 text-sm border border-blue-200 rounded-md px-2 bg-white"
+              >
+                <option value="AND">且</option>
+                <option value="OR">或</option>
+              </select>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-blue-600">关注TA的名人≥</span>
+                <Input
+                  type="number"
+                  value={kolThreshold}
+                  onChange={(e) => handleKolThresholdChange(e.target.value)}
+                  className="w-20 h-7 text-sm border-blue-200 bg-white"
+                  min="0"
+                />
+              </div>
             </div>
 
-            <div className="flex items-center gap-1.5">
+            {/* 第二组筛选条件：发盘/改名 */}
+            <div className="flex items-center gap-2 p-1.5 pr-3 bg-amber-50 rounded-lg border border-amber-100">
+              <div className="flex items-center gap-1.5">
+                <span className="text-amber-600">发盘≤</span>
+                <Input
+                  type="number"
+                  value={contractThreshold}
+                  onChange={(e) => handleContractThresholdChange(e.target.value)}
+                  className="w-16 h-7 text-sm border-amber-200 bg-white"
+                  min="0"
+                />
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-amber-600">改名≤</span>
+                <Input
+                  type="number"
+                  value={renameThreshold}
+                  onChange={(e) => handleRenameThresholdChange(e.target.value)}
+                  className="w-16 h-7 text-sm border-amber-200 bg-white"
+                  min="0"
+                />
+              </div>
+            </div>
+
+            {/* 显示模式切换 */}
+            <div className="flex items-center gap-2 p-1.5 bg-gray-50 rounded-lg border border-gray-200">
               <Switch
                 checked={showHighlightedOnly}
                 onCheckedChange={setShowHighlightedOnly}
                 className="data-[state=checked]:bg-amber-500 h-5 w-9"
               />
-              <span className="text-gray-600">仅显示符合条件</span>
+              <span className="text-gray-600">
+                {showHighlightedOnly ? '仅显示过滤' : '显示全部'}
+              </span>
             </div>
           </div>
 
@@ -619,6 +677,8 @@ export default function Home() {
           </div>
         </div>
 
+        <div className={isBlockListOpen ? "h-[calc(50px+1rem)]" : "h-[15px]"} aria-hidden="true" />
+
         <Collapsible open={isBlockListOpen} onOpenChange={setIsBlockListOpen}>
           <CollapsibleContent>
             <div className="mb-4 bg-white/80 p-4 rounded-lg shadow-sm">
@@ -662,15 +722,21 @@ export default function Home() {
         >
           {data.data
             .filter(tweet => {
-              // 过滤掉拉黑用户的推文
               if (blockedUsers.some(user => user.id === tweet.user_id)) {
                 return false;
               }
               const meetsFollowerThreshold = tweet.followers_count >= followerThreshold;
               const meetsKolThreshold = (tweet.followers?.length || 0) >= kolThreshold;
-              const isHighlighted = filterLogic === 'AND'
+              const meetsRenameThreshold = (tweet.historical_screen_names?.length - 1 || 0) <= renameThreshold;
+              const meetsContractThreshold = tweet.unique_contract_count <= contractThreshold;
+
+              // 修改后的逻辑分组
+              const group1 = filterLogic === 'AND'
                 ? meetsFollowerThreshold && meetsKolThreshold
                 : meetsFollowerThreshold || meetsKolThreshold;
+
+              const group2 = meetsRenameThreshold && meetsContractThreshold;
+              const isHighlighted = group1 && group2;
 
               return showHighlightedOnly ? isHighlighted : true;
             })
