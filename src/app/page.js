@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/zh-cn";
-import Link from "next/link";
 
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -348,360 +347,372 @@ const TweetSkeleton = () => {
     </Card>
   );
 };
-
 export default function Home() {
-  const [followerThreshold, setFollowerThreshold] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('followerThreshold');
-      return saved ? parseInt(saved, 10) : 1000;
-    }
-    return 1000;
-  });
-  const [kolThreshold, setKolThreshold] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('kolThreshold');
-      return saved ? parseInt(saved, 10) : 0;
-    }
-    return 0;
-  });
-  const [autoUpdate, setAutoUpdate] = useState(true);
-  const [countdown, setCountdown] = useState(10);
-  const [showHighlightedOnly, setShowHighlightedOnly] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
-  const [pausedTime, setPausedTime] = useState(null);
-  const [filterLogic, setFilterLogic] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('filterLogic') || 'AND';
-    }
-    return 'AND';
-  });
-
-  // 添加拉黑列表状态
-  const [blockedUsers, setBlockedUsers] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('blockedUsers');
-      return saved ? JSON.parse(saved) : [];
-    }
-    return [];
-  });
-
-  // 添加拉黑列表是否展开的状态
-  const [isBlockListOpen, setIsBlockListOpen] = useState(false);
-
-  const {
-    data,
-    error,
-    status,
-    isLoading,
-    isFetching,
-    dataUpdatedAt,
-    refetch,
-  } = useQuery({
-    queryKey: ["tweets"],
-    queryFn: fetchTweets,
-    refetchInterval: false,
-    refetchIntervalInBackground: false,
-  });
-
-  const handleThresholdChange = (value) => {
-    const newValue = Number(value);
-    setFollowerThreshold(newValue);
-    localStorage.setItem('followerThreshold', newValue.toString());
-  };
-
-  const handleKolThresholdChange = (value) => {
-    const newValue = Number(value);
-    setKolThreshold(newValue);
-    localStorage.setItem('kolThreshold', newValue.toString());
-  };
-
-  const handleFilterLogicChange = (value) => {
-    setFilterLogic(value);
-    localStorage.setItem('filterLogic', value);
-  };
-
-  // 修改拉黑用户的处理函数
-  const handleBlockUser = (user) => {
-    const newBlockedUsers = [...blockedUsers, {
-      id: user.user_id,  // 使用 user_id 作为唯一标识
-      screenName: user.screen_name,
-      name: user.name,
-      profileImage: user.profile_image_url,
-      blockedAt: new Date().toISOString()
-    }];
-    setBlockedUsers(newBlockedUsers);
-    localStorage.setItem('blockedUsers', JSON.stringify(newBlockedUsers));
-  };
-
-  // 处理取消拉黑
-  const handleUnblockUser = (userId) => {
-    const newBlockedUsers = blockedUsers.filter(user => user.id !== userId);
-    setBlockedUsers(newBlockedUsers);
-    localStorage.setItem('blockedUsers', JSON.stringify(newBlockedUsers));
-  };
-
-  useEffect(() => {
-    let timer;
-    if (autoUpdate && !isFetching) {
-      if (!isHovering) {
-        const startTime = Date.now();
-        const initialCountdown = pausedTime || 10;
-        setCountdown(initialCountdown);
-
-        timer = setInterval(() => {
-          const elapsed = Math.floor((Date.now() - startTime) / 1000);
-          const remaining = Math.max(0, initialCountdown - elapsed);
-          setCountdown(remaining);
-
-          if (remaining === 0) {
-            clearInterval(timer);
-            if (typeof refetch === 'function') {
-              refetch();
-            }
-          }
-        }, 200);
-      } else {
-        setPausedTime(countdown);
-      }
-    }
-
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [autoUpdate, isFetching, isHovering, pausedTime]);
-
-  useEffect(() => {
-    if (!isHovering) {
-      setPausedTime(null);
-    }
-  }, [dataUpdatedAt]);
-
-  if (isLoading || status === "loading") {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
-        <div className="container mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {[...Array(12)].map((_, i) => (
-              <TweetSkeleton key={i} />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (status === "error") {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
-        <div className="container mx-auto text-center text-red-500">
-          加载失败: {error.message}
-        </div>
-      </div>
-    );
-  }
-
-  if (!data || !data.data || data.data.length === 0) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
-        <div className="container mx-auto text-center text-gray-500">
-          暂无数据
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
-      <div className="container mx-auto">
-        <div className="mb-4 flex flex-wrap items-center gap-2 bg-white/80 px-3 py-2 rounded-lg shadow-sm text-sm">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              <label className="text-gray-600">筛选：用户粉丝 ≥</label>
-              <Input
-                type="number"
-                value={followerThreshold}
-                onChange={(e) => handleThresholdChange(e.target.value)}
-                className="w-20 h-7 text-sm"
-                min="0"
-              />
-            </div>
-            <select
-              value={filterLogic}
-              onChange={(e) => handleFilterLogicChange(e.target.value)}
-              className="h-7 text-sm border rounded-md px-2"
-            >
-              <option value="AND">且</option>
-              <option value="OR">或</option>
-            </select>
-            <div className="flex items-center gap-1.5">
-              <label className="text-gray-600">KOL关注 ≥</label>
-              <Input
-                type="number"
-                value={kolThreshold}
-                onChange={(e) => handleKolThresholdChange(e.target.value)}
-                className="w-20 h-7 text-sm"
-                min="0"
-              />
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <Switch
-                checked={showHighlightedOnly}
-                onCheckedChange={setShowHighlightedOnly}
-                className="data-[state=checked]:bg-amber-500 h-5 w-9"
-              />
-              <span className="text-gray-600">仅显示符合条件</span>
-            </div>
-          </div>
-
-          <div className="h-6 w-px bg-gray-200 mx-1"></div>
-
-          <div className="flex items-center gap-2">
-            <Switch
-              checked={autoUpdate}
-              onCheckedChange={setAutoUpdate}
-              className="data-[state=checked]:bg-blue-500 h-5 w-9"
-            />
-            <div className="flex items-center gap-1.5">
-              <span className="text-gray-600">自动更新</span>
-              {autoUpdate && !isHovering && (
-                <CircularProgress
-                  progress={(countdown / 10) * 100}
-                  size={14}
-                  className={isFetching ? 'animate-pulse' : ''}
-                />
-              )}
-              <span className="text-xs text-gray-500">
-                {autoUpdate
-                  ? isHovering
-                    ? '已暂停'
-                    : isFetching
-                      ? '更新中'
-                      : `${countdown}秒`
-                  : '已停止'}
-              </span>
-              {isFetching && (
-                <Loader2 className="h-3 w-3 animate-spin text-blue-500" />
-              )}
-            </div>
-          </div>
-
-          <div className="h-6 w-px bg-gray-200 mx-1"></div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsBlockListOpen(!isBlockListOpen)}
-            className="h-7 px-2 flex items-center gap-1.5"
-          >
-            <span>已拉黑</span>
-            <Badge variant="secondary" className="h-5">{blockedUsers.length}</Badge>
-          </Button>
-
-          <div className="flex items-center gap-2 ml-auto">
-            <div className="flex items-center gap-1.5">
-              <div className="relative flex items-center">
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                <div className="absolute -inset-1 bg-green-500 rounded-full animate-ping opacity-20"></div>
-              </div>
-              <span className="text-gray-600">
-                {data.meta.activeUsers}人在线
-              </span>
-            </div>
-            <a
-              href="https://redeemsol.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 hover:scale-105 px-2 py-1 rounded-full bg-gradient-to-r from-green-50 to-blue-50 border border-green-100 hover:border-blue-200 hover:shadow-sm transition-all"
-            >
-              <span className="text-base">♻️</span>
-              <span className="font-medium">回收SOL</span>
-              <span className="text-xs text-blue-500">→</span>
-            </a>
-            
-            {/* 新增问卷分析按钮 */}
-            <a
-              href="https://www.wjx.cn/vm/rKyTKKq.aspx#"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-purple-600 hover:scale-105 px-2 py-1 rounded-full bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-100 hover:border-pink-200 hover:shadow-sm transition-all"
-            >
-              <span className="text-base">📊</span>
-              <span className="font-medium">问卷分析</span>
-              <span className="text-xs text-purple-500">→</span>
-            </a>
-          </div>
-        </div>
-
-        <Collapsible open={isBlockListOpen} onOpenChange={setIsBlockListOpen}>
-          <CollapsibleContent>
-            <div className="mb-4 bg-white/80 p-4 rounded-lg shadow-sm">
-              <h3 className="text-lg font-medium mb-4">已拉黑用户列表</h3>
-              {blockedUsers.length === 0 ? (
-                <p className="text-gray-500 text-sm">暂无拉黑用户</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {blockedUsers.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <Avatar className="w-8 h-8">
-                          <AvatarImage src={user.profileImage} />
-                          <AvatarFallback>{user.name[0]}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium text-sm">{user.name}</p>
-                          <p className="text-xs text-gray-500">@{user.screenName}</p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleUnblockUser(user.id)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        取消拉黑
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-
-        <div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-          onMouseEnter={() => setIsHovering(true)}
-          onMouseLeave={() => setIsHovering(false)}
-        >
-          {data.data
-            .filter(tweet => {
-              // 过滤掉拉黑用户的推文
-              if (blockedUsers.some(user => user.id === tweet.user_id)) {
-                return false;
-              }
-              const meetsFollowerThreshold = tweet.followers_count >= followerThreshold;
-              const meetsKolThreshold = (tweet.followers?.length || 0) >= kolThreshold;
-              const isHighlighted = filterLogic === 'AND'
-                ? meetsFollowerThreshold && meetsKolThreshold
-                : meetsFollowerThreshold || meetsKolThreshold;
-
-              return showHighlightedOnly ? isHighlighted : true;
-            })
-            .map((tweet, index) => (
-              <TweetCard
-                key={tweet.tweet_id}
-                tweet={tweet}
-                index={index}
-                followerThreshold={followerThreshold}
-                kolThreshold={kolThreshold}
-                filterLogic={filterLogic}
-                onBlock={() => handleBlockUser(tweet)}
-                isBlocked={blockedUsers.some(user => user.id === tweet.user_id)}
-              />
-            ))}
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
+      <div className="text-center space-y-4 p-8 rounded-xl bg-white/80 backdrop-blur shadow-lg">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+          维护升级中
+        </h1>
+        <p className="text-gray-500">我们正在努力为您提供更好的服务</p>
+        <div className="animate-bounce text-4xl">🛠️</div>
       </div>
     </div>
   );
 }
+// export default function Home() {
+//   const [followerThreshold, setFollowerThreshold] = useState(() => {
+//     if (typeof window !== 'undefined') {
+//       const saved = localStorage.getItem('followerThreshold');
+//       return saved ? parseInt(saved, 10) : 1000;
+//     }
+//     return 1000;
+//   });
+//   const [kolThreshold, setKolThreshold] = useState(() => {
+//     if (typeof window !== 'undefined') {
+//       const saved = localStorage.getItem('kolThreshold');
+//       return saved ? parseInt(saved, 10) : 0;
+//     }
+//     return 0;
+//   });
+//   const [autoUpdate, setAutoUpdate] = useState(true);
+//   const [countdown, setCountdown] = useState(10);
+//   const [showHighlightedOnly, setShowHighlightedOnly] = useState(false);
+//   const [isHovering, setIsHovering] = useState(false);
+//   const [pausedTime, setPausedTime] = useState(null);
+//   const [filterLogic, setFilterLogic] = useState(() => {
+//     if (typeof window !== 'undefined') {
+//       return localStorage.getItem('filterLogic') || 'AND';
+//     }
+//     return 'AND';
+//   });
+
+//   // 添加拉黑列表状态
+//   const [blockedUsers, setBlockedUsers] = useState(() => {
+//     if (typeof window !== 'undefined') {
+//       const saved = localStorage.getItem('blockedUsers');
+//       return saved ? JSON.parse(saved) : [];
+//     }
+//     return [];
+//   });
+
+//   // 添加拉黑列表是否展开的状态
+//   const [isBlockListOpen, setIsBlockListOpen] = useState(false);
+
+//   const {
+//     data,
+//     error,
+//     status,
+//     isLoading,
+//     isFetching,
+//     dataUpdatedAt,
+//     refetch,
+//   } = useQuery({
+//     queryKey: ["tweets"],
+//     queryFn: fetchTweets,
+//     refetchInterval: false,
+//     refetchIntervalInBackground: false,
+//   });
+
+//   const handleThresholdChange = (value) => {
+//     const newValue = Number(value);
+//     setFollowerThreshold(newValue);
+//     localStorage.setItem('followerThreshold', newValue.toString());
+//   };
+
+//   const handleKolThresholdChange = (value) => {
+//     const newValue = Number(value);
+//     setKolThreshold(newValue);
+//     localStorage.setItem('kolThreshold', newValue.toString());
+//   };
+
+//   const handleFilterLogicChange = (value) => {
+//     setFilterLogic(value);
+//     localStorage.setItem('filterLogic', value);
+//   };
+
+//   // 修改拉黑用户的处理函数
+//   const handleBlockUser = (user) => {
+//     const newBlockedUsers = [...blockedUsers, {
+//       id: user.user_id,  // 使用 user_id 作为唯一标识
+//       screenName: user.screen_name,
+//       name: user.name,
+//       profileImage: user.profile_image_url,
+//       blockedAt: new Date().toISOString()
+//     }];
+//     setBlockedUsers(newBlockedUsers);
+//     localStorage.setItem('blockedUsers', JSON.stringify(newBlockedUsers));
+//   };
+
+//   // 处理取消拉黑
+//   const handleUnblockUser = (userId) => {
+//     const newBlockedUsers = blockedUsers.filter(user => user.id !== userId);
+//     setBlockedUsers(newBlockedUsers);
+//     localStorage.setItem('blockedUsers', JSON.stringify(newBlockedUsers));
+//   };
+
+//   useEffect(() => {
+//     let timer;
+//     if (autoUpdate && !isFetching) {
+//       if (!isHovering) {
+//         const startTime = Date.now();
+//         const initialCountdown = pausedTime || 10;
+//         setCountdown(initialCountdown);
+
+//         timer = setInterval(() => {
+//           const elapsed = Math.floor((Date.now() - startTime) / 1000);
+//           const remaining = Math.max(0, initialCountdown - elapsed);
+//           setCountdown(remaining);
+
+//           if (remaining === 0) {
+//             clearInterval(timer);
+//             if (typeof refetch === 'function') {
+//               refetch();
+//             }
+//           }
+//         }, 200);
+//       } else {
+//         setPausedTime(countdown);
+//       }
+//     }
+
+//     return () => {
+//       if (timer) clearInterval(timer);
+//     };
+//   }, [autoUpdate, isFetching, isHovering, pausedTime]);
+
+//   useEffect(() => {
+//     if (!isHovering) {
+//       setPausedTime(null);
+//     }
+//   }, [dataUpdatedAt]);
+
+//   if (isLoading || status === "loading") {
+//     return (
+//       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+//         <div className="container mx-auto">
+//           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+//             {[...Array(12)].map((_, i) => (
+//               <TweetSkeleton key={i} />
+//             ))}
+//           </div>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   if (status === "error") {
+//     return (
+//       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+//         <div className="container mx-auto text-center text-red-500">
+//           加载失败: {error.message}
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   if (!data || !data.data || data.data.length === 0) {
+//     return (
+//       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+//         <div className="container mx-auto text-center text-gray-500">
+//           暂无数据
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+//       <div className="container mx-auto">
+//         <div className="mb-4 flex flex-wrap items-center gap-2 bg-white/80 px-3 py-2 rounded-lg shadow-sm text-sm">
+//           <div className="flex flex-wrap items-center gap-2">
+//             <div className="flex items-center gap-1.5">
+//               <label className="text-gray-600">筛选：用户粉丝 ≥</label>
+//               <Input
+//                 type="number"
+//                 value={followerThreshold}
+//                 onChange={(e) => handleThresholdChange(e.target.value)}
+//                 className="w-20 h-7 text-sm"
+//                 min="0"
+//               />
+//             </div>
+//             <select
+//               value={filterLogic}
+//               onChange={(e) => handleFilterLogicChange(e.target.value)}
+//               className="h-7 text-sm border rounded-md px-2"
+//             >
+//               <option value="AND">且</option>
+//               <option value="OR">或</option>
+//             </select>
+//             <div className="flex items-center gap-1.5">
+//               <label className="text-gray-600">KOL关注 ≥</label>
+//               <Input
+//                 type="number"
+//                 value={kolThreshold}
+//                 onChange={(e) => handleKolThresholdChange(e.target.value)}
+//                 className="w-20 h-7 text-sm"
+//                 min="0"
+//               />
+//             </div>
+
+//             <div className="flex items-center gap-1.5">
+//               <Switch
+//                 checked={showHighlightedOnly}
+//                 onCheckedChange={setShowHighlightedOnly}
+//                 className="data-[state=checked]:bg-amber-500 h-5 w-9"
+//               />
+//               <span className="text-gray-600">仅显示符合条件</span>
+//             </div>
+//           </div>
+
+//           <div className="h-6 w-px bg-gray-200 mx-1"></div>
+
+//           <div className="flex items-center gap-2">
+//             <Switch
+//               checked={autoUpdate}
+//               onCheckedChange={setAutoUpdate}
+//               className="data-[state=checked]:bg-blue-500 h-5 w-9"
+//             />
+//             <div className="flex items-center gap-1.5">
+//               <span className="text-gray-600">自动更新</span>
+//               {autoUpdate && !isHovering && (
+//                 <CircularProgress
+//                   progress={(countdown / 10) * 100}
+//                   size={14}
+//                   className={isFetching ? 'animate-pulse' : ''}
+//                 />
+//               )}
+//               <span className="text-xs text-gray-500">
+//                 {autoUpdate
+//                   ? isHovering
+//                     ? '已暂停'
+//                     : isFetching
+//                       ? '更新中'
+//                       : `${countdown}秒`
+//                   : '已停止'}
+//               </span>
+//               {isFetching && (
+//                 <Loader2 className="h-3 w-3 animate-spin text-blue-500" />
+//               )}
+//             </div>
+//           </div>
+
+//           <div className="h-6 w-px bg-gray-200 mx-1"></div>
+
+//           <Button
+//             variant="outline"
+//             size="sm"
+//             onClick={() => setIsBlockListOpen(!isBlockListOpen)}
+//             className="h-7 px-2 flex items-center gap-1.5"
+//           >
+//             <span>已拉黑</span>
+//             <Badge variant="secondary" className="h-5">{blockedUsers.length}</Badge>
+//           </Button>
+
+//           <div className="flex items-center gap-2 ml-auto">
+//             <div className="flex items-center gap-1.5">
+//               <div className="relative flex items-center">
+//                 <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+//                 <div className="absolute -inset-1 bg-green-500 rounded-full animate-ping opacity-20"></div>
+//               </div>
+//               <span className="text-gray-600">
+//                 {data.meta.activeUsers}人在线
+//               </span>
+//             </div>
+//             <a
+//               href="https://redeemsol.com"
+//               target="_blank"
+//               rel="noopener noreferrer"
+//               className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 hover:scale-105 px-2 py-1 rounded-full bg-gradient-to-r from-green-50 to-blue-50 border border-green-100 hover:border-blue-200 hover:shadow-sm transition-all"
+//             >
+//               <span className="text-base">♻️</span>
+//               <span className="font-medium">回收SOL</span>
+//               <span className="text-xs text-blue-500">→</span>
+//             </a>
+
+//             {/* 新增问卷分析按钮 */}
+//             <a
+//               href="https://www.wjx.cn/vm/rKyTKKq.aspx#"
+//               target="_blank"
+//               rel="noopener noreferrer"
+//               className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-purple-600 hover:scale-105 px-2 py-1 rounded-full bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-100 hover:border-pink-200 hover:shadow-sm transition-all"
+//             >
+//               <span className="text-base">📊</span>
+//               <span className="font-medium">问卷分析</span>
+//               <span className="text-xs text-purple-500">→</span>
+//             </a>
+//           </div>
+//         </div>
+
+//         <Collapsible open={isBlockListOpen} onOpenChange={setIsBlockListOpen}>
+//           <CollapsibleContent>
+//             <div className="mb-4 bg-white/80 p-4 rounded-lg shadow-sm">
+//               <h3 className="text-lg font-medium mb-4">已拉黑用户列表</h3>
+//               {blockedUsers.length === 0 ? (
+//                 <p className="text-gray-500 text-sm">暂无拉黑用户</p>
+//               ) : (
+//                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+//                   {blockedUsers.map((user) => (
+//                     <div key={user.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+//                       <div className="flex items-center gap-2">
+//                         <Avatar className="w-8 h-8">
+//                           <AvatarImage src={user.profileImage} />
+//                           <AvatarFallback>{user.name[0]}</AvatarFallback>
+//                         </Avatar>
+//                         <div>
+//                           <p className="font-medium text-sm">{user.name}</p>
+//                           <p className="text-xs text-gray-500">@{user.screenName}</p>
+//                         </div>
+//                       </div>
+//                       <Button
+//                         variant="ghost"
+//                         size="sm"
+//                         onClick={() => handleUnblockUser(user.id)}
+//                         className="text-red-500 hover:text-red-700"
+//                       >
+//                         取消拉黑
+//                       </Button>
+//                     </div>
+//                   ))}
+//                 </div>
+//               )}
+//             </div>
+//           </CollapsibleContent>
+//         </Collapsible>
+
+//         <div
+//           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+//           onMouseEnter={() => setIsHovering(true)}
+//           onMouseLeave={() => setIsHovering(false)}
+//         >
+//           {data.data
+//             .filter(tweet => {
+//               // 过滤掉拉黑用户的推文
+//               if (blockedUsers.some(user => user.id === tweet.user_id)) {
+//                 return false;
+//               }
+//               const meetsFollowerThreshold = tweet.followers_count >= followerThreshold;
+//               const meetsKolThreshold = (tweet.followers?.length || 0) >= kolThreshold;
+//               const isHighlighted = filterLogic === 'AND'
+//                 ? meetsFollowerThreshold && meetsKolThreshold
+//                 : meetsFollowerThreshold || meetsKolThreshold;
+
+//               return showHighlightedOnly ? isHighlighted : true;
+//             })
+//             .map((tweet, index) => (
+//               <TweetCard
+//                 key={tweet.tweet_id}
+//                 tweet={tweet}
+//                 index={index}
+//                 followerThreshold={followerThreshold}
+//                 kolThreshold={kolThreshold}
+//                 filterLogic={filterLogic}
+//                 onBlock={() => handleBlockUser(tweet)}
+//                 isBlocked={blockedUsers.some(user => user.id === tweet.user_id)}
+//               />
+//             ))}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
