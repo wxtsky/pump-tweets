@@ -86,16 +86,34 @@ const CircularProgress = ({ progress, size = 16, strokeWidth = 2, className = ""
   );
 };
 
-const TweetCard = ({ tweet, index, followerThreshold, kolThreshold, filterLogic, onBlock, isBlocked }) => {
+const TweetCard = ({
+  tweet,
+  index,
+  followerThreshold,
+  kolThreshold,
+  renameThreshold,
+  contractThreshold,
+  filterLogic,
+  onBlock,
+  isBlocked
+}) => {
   const [copied, setCopied] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
   // 更新高亮逻辑
   const meetsFollowerThreshold = tweet.followers_count >= followerThreshold;
   const meetsKolThreshold = (tweet.followers?.length || 0) >= kolThreshold;
-  const isHighlighted = filterLogic === 'AND'
+  const meetsFollowerKolCondition = filterLogic === 'AND'
     ? meetsFollowerThreshold && meetsKolThreshold
     : meetsFollowerThreshold || meetsKolThreshold;
+
+  // 添加改名和发盘条件
+  const meetsRenameThreshold = (tweet.historical_screen_names?.length - 1 || 0) <= renameThreshold;
+  const meetsContractThreshold = tweet.unique_contract_count <= contractThreshold;
+  const meetsRenameContractCondition = meetsRenameThreshold && meetsContractThreshold;
+
+  // 最终高亮条件：所有条件都满足
+  const isHighlighted = meetsFollowerKolCondition && meetsRenameContractCondition;
 
   const twitterProfileUrl = `https://twitter.com/${tweet.screen_name}`;
   const gmgnUrl = `https://gmgn.ai/sol/token/0frFvctC_${tweet.contract_address}`;
@@ -735,18 +753,21 @@ export default function Home() {
               if (blockedUsers.some(user => user.id === tweet.user_id)) {
                 return false;
               }
+
+              // 粉丝和KOL条件（使用AND或OR逻辑）
               const meetsFollowerThreshold = tweet.followers_count >= followerThreshold;
               const meetsKolThreshold = (tweet.followers?.length || 0) >= kolThreshold;
-              const meetsRenameThreshold = (tweet.historical_screen_names?.length - 1 || 0) <= renameThreshold;
-              const meetsContractThreshold = tweet.unique_contract_count <= contractThreshold;
-
-              // 修改后的逻辑分组
-              const group1 = filterLogic === 'AND'
+              const meetsFollowerKolCondition = filterLogic === 'AND'
                 ? meetsFollowerThreshold && meetsKolThreshold
                 : meetsFollowerThreshold || meetsKolThreshold;
 
-              const group2 = meetsRenameThreshold && meetsContractThreshold;
-              const isHighlighted = group1 && group2;
+              // 改名和发盘条件（始终使用AND逻辑）
+              const meetsRenameThreshold = (tweet.historical_screen_names?.length - 1 || 0) <= renameThreshold;
+              const meetsContractThreshold = tweet.unique_contract_count <= contractThreshold;
+              const meetsRenameContractCondition = meetsRenameThreshold && meetsContractThreshold;
+
+              // 最终条件：(粉丝 AND/OR KOL) AND (改名 AND 发盘)
+              const isHighlighted = meetsFollowerKolCondition && meetsRenameContractCondition;
 
               return showHighlightedOnly ? isHighlighted : true;
             })
@@ -757,6 +778,8 @@ export default function Home() {
                 index={index}
                 followerThreshold={followerThreshold}
                 kolThreshold={kolThreshold}
+                renameThreshold={renameThreshold}
+                contractThreshold={contractThreshold}
                 filterLogic={filterLogic}
                 onBlock={() => handleBlockUser(tweet)}
                 isBlocked={blockedUsers.some(user => user.id === tweet.user_id)}
